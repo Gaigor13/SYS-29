@@ -1,0 +1,84 @@
+---
+- hosts: basthost
+  become: yes
+  vars:
+    ansible_ssh_user: "dusk"
+    ansible_ssh_private_key_file: "/home/dusk/.ssh/dw"
+  vars_files: secr.enc
+  tasks:
+
+  - name: making dirs for ansible files
+    ansible.builtin.file:
+      path: /home/dusk/ansible/templates
+      state: directory
+  - name: copying ansible.cfg
+    ansible.builtin.copy:
+      src: ./ansible.cfg
+      dest: /home/dusk/ansible
+  - name: copying index.html template
+    ansible.builtin.copy:
+      src: ./templates/index.html.j2
+      dest: /home/dusk/ansible/templates
+  - name: copying inventory
+    ansible.builtin.copy:
+      src: ./inventory.ini
+      dest: /home/dusk/ansible
+  - name: copying playbook docker
+    ansible.builtin.copy:
+      src: ./playbook-dock.yml
+      dest: /home/dusk/ansible
+  - name: copying playbook elas
+    ansible.builtin.copy:
+      src: ./playbook-elas.yml
+      dest: /home/dusk/ansible
+  - name: copying playbook web
+    ansible.builtin.copy:
+      src: ./playbook-web.yml
+      dest: /home/dusk/ansible
+  - name: copying playbook kibana
+    ansible.builtin.copy:
+      src: ./playbook-kb.yml
+      dest: /home/dusk/ansible
+  - name: copying playbook filebeat
+    ansible.builtin.copy:
+      src: ./playbook-fb.yml
+      dest: /home/dusk/ansible
+  - name: copying playbook zabbix
+    ansible.builtin.copy:
+      src: ./playbook-zs.yml
+      dest: /home/dusk/ansible
+  - name: copying playbook zabbix agent2
+    ansible.builtin.copy:
+      src: ./playbook-za2.yml
+      dest: /home/dusk/ansible
+  - name: making dirs elk files
+    ansible.builtin.file:
+      path: /home/dusk/ansible/elk_conf
+      state: directory
+  - name: copying elas config
+    ansible.builtin.copy:
+      src: ./elk_conf/elas_config.yml
+      dest: /home/dusk/ansible/elk_conf
+  - name: copying kiba config
+    ansible.builtin.copy:
+      src: ./elk_conf/kiba_config.yml
+      dest: /home/dusk/ansible/elk_conf
+  - name: copying filebeat config
+    ansible.builtin.copy:
+      src: ./elk_conf/filebeat.yml
+      dest: /home/dusk/ansible/elk_conf
+  - name: altering secrets in kiba
+    ansible.builtin.lineinfile:
+      path: /home/dusk/ansible/elk_conf/kiba_config.yml
+      regexp: '^elasticsearch.password:'
+      line: "elasticsearch.password: {{ elpass }}"
+  - name: altering secrets in filebeat
+    ansible.builtin.replace:
+      path: /home/dusk/ansible/elk_conf/filebeat.yml
+      regexp: '(\s+)  password: "elpass"(\s+.*)?$'
+      replace: '\1  password: "{{ elpass }}"\2'
+  - name: altering secrets in elas playbook
+    ansible.builtin.replace:
+      path: /home/dusk/ansible/playbook-elas.yml
+      regexp: '(\s+)ELASTIC_PASSWORD: "elpass"(\s+.*)?$'
+      replace: '\1ELASTIC_PASSWORD: "{{ elpass }}"\2'
